@@ -16,8 +16,6 @@ class CategoryViewController : SwipeTableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.rowHeight = 80
-        tableView.separatorStyle = .none
         loadCategories()
     }
 
@@ -29,7 +27,11 @@ class CategoryViewController : SwipeTableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet"
-        cell.backgroundColor = UIColor(hexString: categories?[indexPath.row].bgColor ?? "#1D9BF6")
+        guard let categoryColor = UIColor(hexString: categories?[indexPath.row].bgColor ?? "#1D9BF6") else {
+            fatalError()
+        }
+        cell.backgroundColor = categoryColor
+        cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn: categoryColor, isFlat:true)
         return cell
     }
     // MARK: - Table view delegate methods
