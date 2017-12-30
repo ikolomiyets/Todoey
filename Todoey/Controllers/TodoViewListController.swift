@@ -10,7 +10,7 @@ import UIKit
 import RealmSwift
 
 class TodoListViewController: SwipeTableViewController {
-    let realm : Realm = (UIApplication.shared.delegate as! AppDelegate).realm!
+    let realm : Realm = try! Realm()
     let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
     var toDoItems : Results<Item>?
     var selectedCategory : Category? {

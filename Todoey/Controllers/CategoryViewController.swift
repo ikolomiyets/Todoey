@@ -11,11 +11,10 @@ import RealmSwift
 import ChameleonFramework
 
 class CategoryViewController : SwipeTableViewController {
-    var realm : Realm? = nil
+    var realm : Realm = try! Realm()
     var categories: Results<Category>?
     
     override func viewDidLoad() {
-        realm = (UIApplication.shared.delegate as! AppDelegate).realm!
         super.viewDidLoad()
         tableView.rowHeight = 80
         tableView.separatorStyle = .none
@@ -67,8 +66,8 @@ class CategoryViewController : SwipeTableViewController {
     
     func save(category: Category) {
         do {
-            try realm!.write {
-                realm!.add(category)
+            try realm.write {
+                realm.add(category)
             }
         } catch {
             print("Error saving data \(error)")
@@ -77,7 +76,7 @@ class CategoryViewController : SwipeTableViewController {
     }
     
     func loadCategories() {
-        categories = realm!.objects(Category.self)
+        categories = realm.objects(Category.self)
 
         tableView.reloadData()
     }
@@ -85,8 +84,8 @@ class CategoryViewController : SwipeTableViewController {
     override func updateModel(at indexPath: IndexPath) {
         if let category = self.categories?[indexPath.row] {
             do {
-                try self.realm?.write {
-                    self.realm?.delete(category)
+                try self.realm.write {
+                    self.realm.delete(category)
                 }
             } catch {
                 print("Error deleting category \(error)")
