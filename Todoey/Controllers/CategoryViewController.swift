@@ -7,27 +7,30 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
+import ChameleonFramework
 
-class CategoryViewController: UITableViewController {
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-    var categories: [Category] = [Category]()
+class CategoryViewController : SwipeTableViewController {
+    var realm : Realm? = nil
+    var categories: Results<Category>?
     
     override func viewDidLoad() {
+        realm = (UIApplication.shared.delegate as! AppDelegate).realm!
         super.viewDidLoad()
+        tableView.rowHeight = 80
+        tableView.separatorStyle = .none
         loadCategories()
     }
 
     // MARK: - Table view data source
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categories.count
+        return categories?.count ?? 1
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
-
-        cell.textLabel?.text = categories[indexPath.row].name
-
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        cell.textLabel?.text = categories?[indexPath.row].name ?? "No Categories Added Yet"
+        cell.backgroundColor = UIColor.randomFlat
         return cell
     }
     // MARK: - Table view delegate methods
@@ -39,7 +42,7 @@ class CategoryViewController: UITableViewController {
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let controller : TodoListViewController = segue.destination as! TodoListViewController
         if let indexPath = tableView.indexPathForSelectedRow {
-            controller.selectedCategory = categories[indexPath.row]
+            controller.selectedCategory = categories![indexPath.row]
             tableView.deselectRow(at: indexPath, animated: true)
         }
     }
@@ -48,10 +51,9 @@ class CategoryViewController: UITableViewController {
         var textField = UITextField()
         let alert = UIAlertController(title: "Add New Todoey Category", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in
-            let newItem = Category(context: self.context)
+            let newItem = Category()
             newItem.name = textField.text!
-            self.categories.append(newItem)
-            self.saveCategories()
+            self.save(category: newItem)
         }
         
         alert.addTextField { (alertTextField) in
@@ -63,9 +65,11 @@ class CategoryViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    func saveCategories() {
+    func save(category: Category) {
         do {
-            try context.save()
+            try realm!.write {
+                realm!.add(category)
+            }
         } catch {
             print("Error saving data \(error)")
         }
@@ -73,12 +77,21 @@ class CategoryViewController: UITableViewController {
     }
     
     func loadCategories() {
-        let request : NSFetchRequest<Category> = Category.fetchRequest()
-        do {
-            categories = try context.fetch(request)
-        } catch {
-            print("Error fetching categories \(error)")
-        }
+        categories = realm!.objects(Category.self)
+
         tableView.reloadData()
     }
+    
+    override func updateModel(at indexPath: IndexPath) {
+        if let category = self.categories?[indexPath.row] {
+            do {
+                try self.realm?.write {
+                    self.realm?.delete(category)
+                }
+            } catch {
+                print("Error deleting category \(error)")
+            }
+        }
+    }
 }
+
